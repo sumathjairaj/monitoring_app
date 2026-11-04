@@ -7,6 +7,29 @@
   <p class="lead">Live CPU, memory, network, and port usage for this computer.</p>
   <section class="card" aria-label="Servers">
     <h2>Servers</h2>
-    <p class="empty">No servers yet.</p>
+    {% if error %}
+      <p class="error" role="alert">{{ error }}</p>
+    {% endif %}
+    {% if servers %}
+      <ul class="servers">
+        {% for server in servers %}
+          <li>
+            <a href="{{ url_for('server_detail', server_id=server.id) }}">{{ server.name }}</a>
+            <form method="post" action="{{ url_for('remove_server', server_id=server.id) }}">
+              <button class="ghost" type="submit" aria-label="Remove {{ server.name }}">Remove</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No servers yet.</p>
+    {% endif %}
+    <form class="add" method="post" action="{{ url_for('add_server') }}">
+      <label for="name">Display name</label>
+      <div class="form-row">
+        <input id="name" name="name" type="text" maxlength="64" autocomplete="off">
+        <button type="submit">Save</button>
+      </div>
+    </form>
   </section>
 {% endblock %}
