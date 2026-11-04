@@ -194,6 +194,104 @@ def test_detail_page_and_unknown_id(tmp_path):
     assert page.data.lower().count(b"<form") == 1
 
 
+def test_remote_server_is_saved_and_shown(client, login, app):
+    login()
+    response = client.post(
+        "/servers",
+        data={"name": "db", "host": "db.example", "ssh_user": "monitor", "port": "2222"},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"monitor@db.example:2222" in response.data
+    saved = next(row for row in list_servers(app.config["DB_PATH"]) if row["name"] == "db")
+    assert saved["host"] == "db.example"
+    assert saved["port"] == 2222
+    assert saved["username"] == "monitor"
+
+
+def test_invalid_remote_target_is_rejected(client, login, app):
+    login()
+    response = client.post(
+        "/servers",
+        data={"name": "db", "host": "bad host", "ssh_user": "monitor"},
+        follow_redirects=True,
+    )
+    assert b"Enter a hostname or IP address." in response.data
+    assert list_servers(app.config["DB_PATH"]) == []
+    missing_user = client.post(
+        "/servers",
+        data={"name": "db", "host": "db.example", "ssh_user": ""},
+        follow_redirects=True,
+    )
+    assert b"Enter the SSH username for that server." in missing_user.data
+    bad_port = client.post(
+        "/servers",
+        data={"name": "db", "host": "db.example", "ssh_user": "monitor", "port": "70000"},
+        follow_redirects=True,
+    )
+    assert b"Enter a port from 1 to 65535." in bad_port.data
+    assert list_servers(app.config["DB_PATH"]) == []
+
+
+def test_remote_detail_reads_the_saved_server(tmp_path):
+    from app import create_app
+
+    seen = {}
+
+    def remote_reader(host, port, username):
+        seen["target"] = (host, port, username)
+        return {
+            "cpu_percent": 4.0,
+            "memory_used": "1.0 KB",
+            "memory_total": "2.0 KB",
+            "memory_percent": 50.0,
+            "bytes_recv": "3.0 KB",
+            "bytes_sent": "4.0 KB",
+            "interfaces": [],
+            "ports": [],
+        }
+
+    def local_reader():
+        raise AssertionError("local metrics were read for a remote server")
+
+    app = create_app(
+        db_path=tmp_path / "servers.db",
+        secret_key="test-secret",
+        metrics_reader=local_reader,
+        remote_reader=remote_reader,
+    )
+    client = app.test_client()
+    client.post("/login", data={"username": "admin", "password": "admin"})
+    client.post(
+        "/servers",
+        data={"name": "db", "host": "db.example", "ssh_user": "monitor", "port": "2222"},
+    )
+    server_id = list_servers(app.config["DB_PATH"])[0]["id"]
+    page = client.get(f"/servers/{server_id}")
+    assert page.status_code == 200
+    assert b"Source: monitor@db.example:2222" in page.data
+    assert b"4.0%" in page.data
+    assert seen["target"] == ("db.example", 2222, "monitor")
+
+
+def test_existing_database_gains_remote_columns(tmp_path):
+    import sqlite3
+
+    db = tmp_path / "servers.db"
+    connection = sqlite3.connect(db)
+    connection.execute(
+        "CREATE TABLE servers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)"
+    )
+    connection.execute("INSERT INTO servers (name) VALUES ('local')")
+    connection.commit()
+    connection.close()
+    init_db(db)
+    rows = list_servers(db)
+    assert rows == [
+        {"id": 1, "name": "local", "host": None, "port": None, "username": None}
+    ]
+
+
 def test_detail_requires_sign_in(client, app):
     server_id = insert_server(app.config["DB_PATH"], "edge")
     response = client.get(f"/servers/{server_id}")

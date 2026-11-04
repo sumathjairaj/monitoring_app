@@ -6,6 +6,7 @@ from flask import Flask, abort, redirect, render_template, request, session, url
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from metrics import read_local_metrics
+from remote_metrics import RemoteError, read_remote_metrics
 from storage import delete_server, get_server, init_db, insert_server, list_servers
 
 DEMO_USERNAME = "admin"
@@ -20,18 +21,30 @@ ADD_ERRORS = {
     "empty": "Enter a server name.",
     "duplicate": "That name is already in the list.",
     "long": "Name must be 64 characters or fewer.",
+    "host": "Enter a hostname or IP address.",
+    "user": "Enter the SSH username for that server.",
+    "port": "Enter a port from 1 to 65535.",
+}
+REMOTE_ERRORS = {
+    "unreachable": "Could not reach that server over SSH.",
+    "auth": "SSH authentication failed. This app uses the keys already available to this account.",
+    "hostkey": "The server host key is not trusted yet. Accept it for this account first.",
+    "timeout": "The server did not respond in time.",
+    "badreport": "The server did not return metrics.",
+    "host": "Enter a hostname or IP address.",
 }
 
 DEFAULT_DB_PATH = Path(__file__).resolve().parent / "servers.db"
 
 
-def create_app(db_path=None, secret_key=None, metrics_reader=None):
+def create_app(db_path=None, secret_key=None, metrics_reader=None, remote_reader=None):
     app = Flask(__name__)
     app.config["SECRET_KEY"] = secret_key or os.environ.get("SECRET_KEY") or DEMO_SECRET_KEY
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["DB_PATH"] = str(db_path or DEFAULT_DB_PATH)
     app.config["METRICS_READER"] = metrics_reader or read_local_metrics
+    app.config["REMOTE_READER"] = remote_reader or read_remote_metrics
 
     init_db(app.config["DB_PATH"])
 
@@ -80,7 +93,13 @@ def create_app(db_path=None, secret_key=None, metrics_reader=None):
     @login_required
     def add_server():
         try:
-            insert_server(app.config["DB_PATH"], request.form.get("name", ""))
+            insert_server(
+                app.config["DB_PATH"],
+                request.form.get("name", ""),
+                host=request.form.get("host", ""),
+                port=request.form.get("port", ""),
+                username=request.form.get("ssh_user", ""),
+            )
         except ValueError as exc:
             return redirect(url_for("home", error=str(exc)))
         return redirect(url_for("home"))
@@ -97,8 +116,25 @@ def create_app(db_path=None, secret_key=None, metrics_reader=None):
         server = get_server(app.config["DB_PATH"], server_id)
         if server is None:
             abort(404)
-        metrics = app.config["METRICS_READER"]()
-        return render_template("detail.html", server=server, metrics=metrics)
+        metrics_error = None
+        try:
+            if server.get("host"):
+                metrics = app.config["REMOTE_READER"](
+                    server["host"],
+                    server["port"] or 22,
+                    server["username"],
+                )
+            else:
+                metrics = app.config["METRICS_READER"]()
+        except RemoteError as exc:
+            metrics = None
+            metrics_error = REMOTE_ERRORS.get(str(exc), REMOTE_ERRORS["unreachable"])
+        return render_template(
+            "detail.html",
+            server=server,
+            metrics=metrics,
+            metrics_error=metrics_error,
+        )
 
     @app.errorhandler(404)
     def not_found(_error):

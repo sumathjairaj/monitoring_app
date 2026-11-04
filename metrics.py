@@ -72,6 +72,10 @@ def shape_metrics(snapshot, resolve_process):
             }
         )
     interfaces.sort(key=lambda item: item["name"])
+    if "ports" in snapshot:
+        ports = list(snapshot["ports"])
+    else:
+        ports = listening_ports(snapshot.get("connections", []), resolve_process)
     return {
         "cpu_percent": round(float(snapshot["cpu_percent"]), 1),
         "memory_used": format_bytes(snapshot["memory_used"]),
@@ -80,7 +84,7 @@ def shape_metrics(snapshot, resolve_process):
         "bytes_recv": format_bytes(snapshot["bytes_recv"]),
         "bytes_sent": format_bytes(snapshot["bytes_sent"]),
         "interfaces": interfaces,
-        "ports": listening_ports(snapshot.get("connections", []), resolve_process),
+        "ports": ports,
     }
 
 

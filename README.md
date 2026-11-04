@@ -25,18 +25,18 @@ Set `SECRET_KEY` in the environment for any real use. If it is unset, the local 
 
 ## Servers
 
-Display names are stored in `servers.db` in the application directory. On the home page, enter a name and save it to add a label for this computer. An empty name, a name longer than 64 characters, or a duplicate name is rejected. Remove deletes that name only. It does not change the host.
+Display names are stored in `servers.db` in the application directory. On the home page, enter a name and save it to label this computer. To monitor another Linux server, also enter its hostname or IP address, SSH user, and SSH port. The connection uses the SSH keys already available to this account. An empty name, a name longer than 64 characters, a duplicate name, or an invalid host, user, or port is rejected. Remove deletes that saved server only. It does not change the host.
 
 ## Server detail
 
-Open a name to see live figures for this computer:
+Open a name to see live figures for that server:
 
 - CPU — overall usage percent
 - Memory — used, total, and percent
 - Network — received and sent bytes
 - Listening ports — TCP and UDP, with port, process, and address
 
-The page is titled with the display name and includes the line “Source: this computer”. It reloads these metrics about every 15 seconds. The page has no control that changes the host.
+The page is titled with the display name. This computer is labeled “Source: this computer”. A remote server is labeled with its SSH user, host, and port. The page reloads these metrics about every 15 seconds. It has no control that changes the host.
 
 ## CI
 

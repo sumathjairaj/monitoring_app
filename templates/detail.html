@@ -8,8 +8,16 @@
 
 {% block content %}
   <h1>{{ server.name }}</h1>
-  <p class="lead">Source: this computer</p>
+  {% if server.host %}
+    <p class="lead">Source: {{ server.username }}@{{ server.host }}:{{ server.port }}</p>
+  {% else %}
+    <p class="lead">Source: this computer</p>
+  {% endif %}
   <p class="note">Refreshes about every 15 seconds. <a href="{{ url_for('home') }}">All servers</a></p>
+  {% if metrics_error %}
+    <p class="error" role="alert">{{ metrics_error }}</p>
+  {% endif %}
+  {% if metrics %}
   <div class="stack">
     <div class="metrics">
       <article class="card">
@@ -81,4 +89,5 @@
       {% endif %}
     </section>
   </div>
+  {% endif %}
 {% endblock %}

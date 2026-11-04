@@ -138,12 +138,26 @@ a {
   font-weight: 650;
 }
 
+.server-label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.server-label .sub {
+  margin: 0;
+}
+
 .field {
   margin-bottom: 14px;
 }
 
 .add {
-  margin-top: 20px;
+  margin-top: 4px;
+}
+
+main .card + .card {
+  margin-top: 16px;
 }
 
 label {
