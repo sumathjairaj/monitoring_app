@@ -4,12 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Demo Monitoring{% endblock %}</title>
+  {% block head %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header class="top">
-    <div class="wrap">
+    <div class="wrap bar">
       <p class="brand">Demo Monitoring</p>
+      {% if signed_in %}
+        <form class="session" method="post" action="{{ url_for('logout') }}">
+          <span class="who">Signed in</span>
+          <button class="ghost" type="submit">Sign out</button>
+        </form>
+      {% endif %}
     </div>
   </header>
   <main class="wrap">

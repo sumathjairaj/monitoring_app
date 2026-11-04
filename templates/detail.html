@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ server.name }} · Demo Monitoring{% endblock %}
+
+{% block head %}
+  <meta http-equiv="refresh" content="15">
+{% endblock %}
+
+{% block content %}
+  <h1>{{ server.name }}</h1>
+  {% if server.host %}
+    <p class="lead">Source: {{ server.username }}@{{ server.host }}:{{ server.port }}</p>
+  {% else %}
+    <p class="lead">Source: this computer</p>
+  {% endif %}
+  <p class="note">Refreshes about every 15 seconds. <a href="{{ url_for('home') }}">All servers</a></p>
+  {% if metrics_error %}
+    <p class="error" role="alert">{{ metrics_error }}</p>
+  {% endif %}
+  {% if metrics %}
+  <div class="stack">
+    <div class="metrics">
+      <article class="card metric-card">
+        <h2>CPU</h2>
+        <p class="metric">{{ metrics.cpu_percent }}%</p>
+      </article>
+      <article class="card metric-card">
+        <h2>Memory</h2>
+        <p class="metric">{{ metrics.memory_percent }}%</p>
+        <p class="sub">Used {{ metrics.memory_used }}</p>
+        <p class="sub">Total {{ metrics.memory_total }}</p>
+      </article>
+    </div>
+    <section class="card">
+      <h2>Network</h2>
+      <p class="sub">Received {{ metrics.bytes_recv }}</p>
+      <p class="sub">Sent {{ metrics.bytes_sent }}</p>
+      {% if metrics.interfaces %}
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Interface</th>
+              <th scope="col">Received</th>
+              <th scope="col">Sent</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in metrics.interfaces %}
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.bytes_recv }}</td>
+                <td>{{ item.bytes_sent }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        </div>
+      {% endif %}
+    </section>
+    <section class="card">
+      <h2>Listening ports</h2>
+      <p class="sub">The process name is included when this account can see the socket owner.</p>
+      {% if metrics.ports %}
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Protocol</th>
+              <th scope="col">Port</th>
+              <th scope="col">Process</th>
+              <th scope="col">Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for port in metrics.ports %}
+              <tr>
+                <td>{{ port.protocol }}</td>
+                <td>{{ port.port }}</td>
+                <td>{{ port.process }}</td>
+                <td>{{ port.address }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        </div>
+      {% else %}
+        <p class="empty">No listening ports reported.</p>
+      {% endif %}
+    </section>
+  </div>
+  {% endif %}
+{% endblock %}
