@@ -20,11 +20,11 @@
   {% if metrics %}
   <div class="stack">
     <div class="metrics">
-      <article class="card">
+      <article class="card metric-card">
         <h2>CPU</h2>
         <p class="metric">{{ metrics.cpu_percent }}%</p>
       </article>
-      <article class="card">
+      <article class="card metric-card">
         <h2>Memory</h2>
         <p class="metric">{{ metrics.memory_percent }}%</p>
         <p class="sub">Used {{ metrics.memory_used }}</p>

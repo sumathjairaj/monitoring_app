@@ -3,8 +3,9 @@
 {% block title %}Sign in · Demo Monitoring{% endblock %}
 
 {% block content %}
+  <div class="signin">
   <h1>Sign in</h1>
-  <p class="lead">Demo account: admin / admin. Metrics on the next pages are for this computer only.</p>
+  <p class="lead">Demo account: admin / admin.</p>
   <section class="card" aria-label="Sign in">
     {% if error %}
       <p class="error" role="alert">{{ error }}</p>
@@ -21,4 +22,5 @@
       <button type="submit">Sign in</button>
     </form>
   </section>
+  </div>
 {% endblock %}

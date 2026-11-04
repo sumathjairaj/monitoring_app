@@ -11,24 +11,26 @@
       <p class="error" role="alert">{{ error }}</p>
     {% endif %}
     <form class="add" method="post" action="{{ url_for('add_server') }}">
-      <div class="field">
-        <label for="name">Display name</label>
-        <input id="name" name="name" type="text" maxlength="64" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="host">Host</label>
-        <input id="host" name="host" type="text" maxlength="253" autocomplete="off" placeholder="Leave blank for this computer">
-      </div>
-      <div class="field">
-        <label for="ssh_user">SSH user</label>
-        <input id="ssh_user" name="ssh_user" type="text" maxlength="32" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="port">SSH port</label>
-        <input id="port" name="port" type="text" inputmode="numeric" maxlength="5" placeholder="22">
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="name">Display name</label>
+          <input id="name" name="name" type="text" maxlength="64" autocomplete="off" placeholder="web-1">
+        </div>
+        <div class="field">
+          <label for="host">Host</label>
+          <input id="host" name="host" type="text" maxlength="253" autocomplete="off" placeholder="Leave blank for this computer">
+        </div>
+        <div class="field">
+          <label for="ssh_user">SSH user</label>
+          <input id="ssh_user" name="ssh_user" type="text" maxlength="32" autocomplete="off" placeholder="ubuntu">
+        </div>
+        <div class="field">
+          <label for="port">SSH port</label>
+          <input id="port" name="port" type="text" inputmode="numeric" maxlength="5" placeholder="22">
+        </div>
       </div>
       <button type="submit">Add server</button>
-      <p class="sub">A hostname uses this account's existing SSH keys. The page collects CPU, memory, network, and listening ports.</p>
+      <p class="sub hint">A hostname uses this account's existing SSH keys. The page collects CPU, memory, network, and listening ports.</p>
     </form>
   </section>
   <section class="card" aria-label="Servers">
@@ -40,9 +42,9 @@
             <div class="server-label">
               <a href="{{ url_for('server_detail', server_id=server.id) }}">{{ server.name }}</a>
               {% if server.host %}
-                <span class="sub">{{ server.username }}@{{ server.host }}:{{ server.port }}</span>
+                <span class="badge">{{ server.username }}@{{ server.host }}:{{ server.port }}</span>
               {% else %}
-                <span class="sub">This computer</span>
+                <span class="badge">This computer</span>
               {% endif %}
             </div>
             <form method="post" action="{{ url_for('remove_server', server_id=server.id) }}">
